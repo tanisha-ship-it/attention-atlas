@@ -4,8 +4,7 @@ const atlas = document.querySelector('#atlas');
 const layer = document.querySelector('#artifacts');
 const horizontalSlider = document.querySelector('#horizontal-position');
 const verticalSlider = document.querySelector('#vertical-position');
-const xReadout = document.querySelector('#position-x');
-const yReadout = document.querySelector('#position-y');
+const zoomSlider = document.querySelector('#zoom');
 const indexPanel = document.querySelector('#index-panel');
 const indexList = document.querySelector('#index-list');
 
@@ -15,7 +14,7 @@ const state = {
   x: 0, y: 0, targetX: 0, targetY: 0,
   vx: 0, vy: 0, dragging: false,
   lastX: 0, lastY: 0, lastTime: 0,
-  sliderMoving: false
+  sliderMoving: false, zoom: 1
 };
 
 const artifacts = [
@@ -62,8 +61,8 @@ function resize() {
 
 // A gentle radial lens makes the center feel convex, like moving across a globe.
 function project(worldX, worldY) {
-  const dx = worldX - state.x;
-  const dy = worldY - state.y;
+  const dx = (worldX - state.x) * state.zoom;
+  const dy = (worldY - state.y) * state.zoom;
   const radius = Math.hypot(dx, dy);
   const viewportRadius = Math.min(innerWidth, innerHeight) * .72;
   const bulge = 1 + .11 * Math.exp(-(radius * radius) / (viewportRadius * viewportRadius));
@@ -78,10 +77,10 @@ function drawCurve(points) {
 
 function drawGrid() {
   ctx.clearRect(0, 0, innerWidth, innerHeight);
-  ctx.strokeStyle = 'rgba(38,43,34,.14)';
+  ctx.strokeStyle = 'rgba(0,0,0,.11)';
   ctx.lineWidth = 1;
-  const spanX = innerWidth * 1.1;
-  const spanY = innerHeight * 1.1;
+  const spanX = innerWidth * 1.1 / state.zoom;
+  const spanY = innerHeight * 1.1 / state.zoom;
   const minX = Math.floor((state.x - spanX) / GRID_SIZE) * GRID_SIZE;
   const maxX = Math.ceil((state.x + spanX) / GRID_SIZE) * GRID_SIZE;
   const minY = Math.floor((state.y - spanY) / GRID_SIZE) * GRID_SIZE;
@@ -125,12 +124,6 @@ function softLimit(value) {
   return sign * (WORLD_LIMIT + Math.sqrt(Math.abs(value) - WORLD_LIMIT) * 9);
 }
 
-function labelPosition(value, negative, positive) {
-  if (Math.abs(value) < 9) return 'centered';
-  const strength = Math.abs(value) > 66 ? '' : 'leaning ';
-  return `${strength}${value < 0 ? negative : positive}`;
-}
-
 function syncControls() {
   const nx = Math.round(state.x / WORLD_LIMIT * 100);
   const ny = Math.round(-state.y / WORLD_LIMIT * 100);
@@ -138,8 +131,6 @@ function syncControls() {
     horizontalSlider.value = Math.max(-100, Math.min(100, nx));
     verticalSlider.value = Math.max(-100, Math.min(100, ny));
   }
-  xReadout.textContent = labelPosition(nx, 'Found', 'Created');
-  yReadout.textContent = labelPosition(ny, 'Passing Interest', 'Active Focus');
 }
 
 function tick() {
@@ -221,10 +212,18 @@ function sliderInput() {
 
 function sliderEnd() { state.sliderMoving = false; }
 
+function setZoom(value) {
+  state.zoom = Math.max(.65, Math.min(1.6, value));
+  zoomSlider.value = Math.round(state.zoom * 100);
+}
+
 horizontalSlider.addEventListener('input', sliderInput);
 verticalSlider.addEventListener('input', sliderInput);
 horizontalSlider.addEventListener('change', sliderEnd);
 verticalSlider.addEventListener('change', sliderEnd);
+zoomSlider.addEventListener('input', () => setZoom(Number(zoomSlider.value) / 100));
+document.querySelector('#zoom-out').addEventListener('click', () => setZoom(state.zoom - .15));
+document.querySelector('#zoom-in').addEventListener('click', () => setZoom(state.zoom + .15));
 atlas.addEventListener('pointerdown', startDrag);
 atlas.addEventListener('pointermove', moveDrag);
 atlas.addEventListener('pointerup', endDrag);
