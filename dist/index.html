@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A tactile map of found and created attention." />
+    <title>Attention Atlas</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main id="atlas" aria-label="Attention Atlas interactive map">
+      <canvas id="grid" aria-hidden="true"></canvas>
+
+      <header class="topbar">
+        <a class="wordmark" href="#" aria-label="Return to the center">Attention Atlas</a>
+        <nav aria-label="Main navigation">
+          <button class="nav-button active" data-view="atlas">Atlas</button>
+          <button class="nav-button" data-view="index">Index</button>
+        </nav>
+      </header>
+
+      <section id="artifacts" aria-label="Atlas artifacts"></section>
+
+      <div class="axis axis-horizontal" aria-hidden="true">
+        <span>Found</span><i></i><span>Created</span>
+      </div>
+      <div class="axis axis-vertical" aria-hidden="true">
+        <span>Active Focus</span><i></i><span>Passing Interest</span>
+      </div>
+
+      <section class="navigator" aria-label="Map position controls">
+        <div class="nav-row">
+          <span>Found</span>
+          <input id="horizontal-position" type="range" min="-100" max="100" value="0" aria-label="Position between Found and Created" />
+          <span>Created</span>
+        </div>
+        <div class="position-readout" aria-live="polite">
+          <span id="position-x">centered</span>
+          <b>·</b>
+          <span id="position-y">centered</span>
+        </div>
+        <div class="nav-row">
+          <span>Passing Interest</span>
+          <input id="vertical-position" type="range" min="-100" max="100" value="0" aria-label="Position between Passing Interest and Active Focus" />
+          <span>Active Focus</span>
+        </div>
+      </section>
+
+      <button id="recenter" class="recenter" aria-label="Return to the center" title="Return to center">⌖</button>
+      <p class="hint">Drag to move · use the sliders to travel</p>
+
+      <aside id="index-panel" class="index-panel" aria-hidden="true">
+        <div class="index-heading">
+          <h1>Index</h1>
+          <button id="close-index" aria-label="Close index">Close</button>
+        </div>
+        <p class="index-intro">Everything currently held in the atlas.</p>
+        <ol id="index-list"></ol>
+      </aside>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
