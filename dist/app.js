@@ -18,14 +18,14 @@ const state = {
 };
 
 const artifacts = [
-  { id: 1, type: 'text', x: -360, y: -230, title: 'Interfaces that feel like places', content: 'Interfaces that feel more like places than pages.' },
-  { id: 2, type: 'image', x: -430, y: 245, title: 'Found color study', color: '#738fd0', mark: 'found image · 01' },
-  { id: 3, type: 'text', x: 340, y: -250, title: 'Active note', content: 'What changes when attention is arranged spatially?' },
-  { id: 4, type: 'image', x: 420, y: 250, title: 'Made fragment', color: '#54df52', mark: 'created image · 02' },
-  { id: 5, type: 'text', x: -250, y: 790, title: 'Passing thought', content: 'A passing thought, kept before it disappears.' },
-  { id: 6, type: 'image', x: 320, y: -920, title: 'Current focus', color: '#e6d55c', mark: 'active focus · 03' },
-  { id: 7, type: 'text', x: 1050, y: 120, title: 'Small observation', content: 'The map is also a portrait of time spent looking.' },
-  { id: 8, type: 'image', x: -1080, y: -140, title: 'Internet fragment', color: '#c95d58', mark: 'found fragment · 04' }
+  { id: 1, type: 'text', x: -385, y: -275, title: 'Interfaces that feel like places', content: 'Interfaces that feel more like places than pages.' },
+  { id: 2, type: 'image', x: -385, y: 275, title: 'Found color study', color: '#738fd0', mark: 'found image · 01' },
+  { id: 3, type: 'text', x: 385, y: -275, title: 'Active note', content: 'What changes when attention is arranged spatially?' },
+  { id: 4, type: 'image', x: 385, y: 275, title: 'Made fragment', color: '#54df52', mark: 'created image · 02' },
+  { id: 5, type: 'text', x: -275, y: 825, title: 'Passing thought', content: 'A passing thought, kept before it disappears.' },
+  { id: 6, type: 'image', x: 275, y: -935, title: 'Current focus', color: '#e6d55c', mark: 'active focus · 03' },
+  { id: 7, type: 'text', x: 1045, y: 165, title: 'Small observation', content: 'The map is also a portrait of time spent looking.' },
+  { id: 8, type: 'image', x: -1045, y: -165, title: 'Internet fragment', color: '#c95d58', mark: 'found fragment · 04' }
 ];
 
 function makeArtifacts() {
@@ -114,7 +114,7 @@ function renderArtifacts() {
     const p = project(item.x, item.y);
     const visible = p.x > -260 && p.x < innerWidth + 260 && p.y > -220 && p.y < innerHeight + 220;
     el.style.display = visible ? '' : 'none';
-    el.style.transform = `translate(${p.x - el.offsetWidth / 2}px, ${p.y - el.offsetHeight / 2}px) rotate(${(item.id % 3 - 1) * 1.2}deg) scale(${Math.min(p.scale, 1.08)})`;
+    el.style.transform = `translate(${p.x - GRID_SIZE / 2}px, ${p.y - GRID_SIZE / 2}px) scale(${state.zoom * Math.min(p.scale, 1.08)})`;
   });
 }
 

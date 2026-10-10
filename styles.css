@@ -69,8 +69,10 @@ button { cursor: pointer; }
 #artifacts { position: absolute; inset: 0; pointer-events: none; }
 .artifact {
   position: absolute;
+  width: 110px;
+  height: 110px;
   transform-origin: center;
-  border: 1.2px solid var(--ink);
+  border: 0;
   background: #fff;
   box-shadow: none;
   overflow: hidden;
@@ -80,15 +82,16 @@ button { cursor: pointer; }
 }
 
 .artifact.text {
-  width: 180px;
-  min-height: 112px;
-  padding: 18px;
+  width: 110px;
+  height: 110px;
+  padding: 10px;
   font-family: Inter, Arial, sans-serif;
-  font-size: 16px;
+  font-size: 12px;
+  line-height: 1.22;
   line-height: 1.18;
 }
 
-.artifact.image { width: 190px; height: 138px; }
+.artifact.image { width: 110px; height: 110px; }
 .artifact.image::before {
   content: "";
   position: absolute;
@@ -100,7 +103,7 @@ button { cursor: pointer; }
   position: absolute;
   inset: auto 10px 9px;
   font-family: Inter, Arial, sans-serif;
-  font-size: 15px;
+  font-size: 10px;
 }
 .artifact:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
 
