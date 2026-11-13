@@ -3,61 +3,139 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="A tactile map of found and created attention." />
+    <meta name="description" content="A spatial record of what Tanisha is finding, making, and paying attention to on the internet." />
     <title>Attention Atlas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Figtree:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=40" />
   </head>
   <body>
-    <main id="atlas" aria-label="Attention Atlas interactive map">
-      <canvas id="grid" aria-hidden="true"></canvas>
+    <div class="app" data-view="ground">
+      <!-- The map -->
+      <canvas id="map" aria-label="Attention Atlas map. Drag to move, use the Index to browse every entry."></canvas>
 
-      <header class="topbar">
-        <nav aria-label="Main navigation">
-          <a class="wordmark" href="#" aria-label="Return to the center">Atlas</a>
-          <button class="nav-button" data-view="index">Index</button>
+      <!-- Top navigation -->
+      <header class="top">
+        <nav aria-label="Main">
+          <ul>
+            <li><a class="btn" href="#/" data-route="ground">Atlas</a></li>
+            <li><a class="btn" href="#/index" data-route="index">Entries</a></li>
+            <li><a class="btn" href="#/about" data-route="about">Hi</a></li>
+          </ul>
         </nav>
-        <div class="zoom-control" aria-label="Zoom controls">
-          <button id="zoom-out" aria-label="Zoom out">−</button>
-          <input id="zoom" type="range" min="65" max="160" value="100" aria-label="Map zoom" />
-          <button id="zoom-in" aria-label="Zoom in">+</button>
-        </div>
       </header>
 
-      <section id="artifacts" aria-label="Atlas artifacts"></section>
-
-      <div class="edge-axis horizontal-axis">
-        <span>Found</span>
-        <div class="axis-range horizontal-range">
-          <span class="arrow left-arrow">‹</span>
-          <input id="horizontal-position" type="range" min="-100" max="100" value="0" aria-label="Position between Found and Created" />
-          <span class="arrow right-arrow">›</span>
+      <!-- Edge axes (location sliders) -->
+      <div class="axis axis-x" id="axis-x">
+        <span class="axis-label">found it</span>
+        <div class="axis-track" role="slider" tabindex="0" aria-label="Move between found it and made it" aria-valuemin="-100" aria-valuemax="100">
+          <svg class="axis-line" viewBox="0 0 160 14" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M1 7h158M7 1 1 7l6 6M153 1l6 6-6 6M80 3v8" vector-effect="non-scaling-stroke" />
+          </svg>
+          <span class="axis-marker"></span>
         </div>
-        <span>Created</span>
+        <span class="axis-label">made it</span>
       </div>
 
-      <div class="edge-axis vertical-axis">
-        <span>Active Focus</span>
-        <div class="axis-range vertical-range">
-          <span class="arrow up-arrow">↑</span>
-          <input id="vertical-position" type="range" min="-100" max="100" value="0" aria-label="Position between Passing Interest and Active Focus" />
-          <span class="arrow down-arrow">↓</span>
+      <div class="axis axis-y" id="axis-y">
+        <span class="axis-label">can’t stop thinking about it</span>
+        <div class="axis-track" role="slider" tabindex="0" aria-label="Move between can’t stop thinking about it and passing by" aria-valuemin="-100" aria-valuemax="100">
+          <svg class="axis-line" viewBox="0 0 14 160" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M7 1v158M1 7l6-6 6 6M1 153l6 6 6-6M3 80h8" vector-effect="non-scaling-stroke" />
+          </svg>
+          <span class="axis-marker"></span>
         </div>
-        <span>Passing Interest</span>
+        <span class="axis-label">passing by</span>
       </div>
 
-      <button id="recenter" class="recenter" aria-label="Return to the center" title="Return to center">⌖</button>
-      <aside id="index-panel" class="index-panel" aria-hidden="true">
-        <div class="index-heading">
-          <h1>Index</h1>
-          <button id="close-index" aria-label="Close index">Close</button>
+      <!-- Right edge: zoom (mirrors the left axis) + recenter -->
+      <div class="side-right">
+        <div class="zoom" aria-label="Zoom">
+          <button class="zoom-step" id="zoom-in" aria-label="Zoom in">
+            <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10M6 1v10" /></svg>
+          </button>
+          <div class="zoom-track" id="zoom-track" role="slider" tabindex="0" aria-orientation="vertical" aria-label="Zoom level" aria-valuemin="0" aria-valuemax="100">
+            <span class="zoom-line"></span>
+            <span class="zoom-thumb" id="zoom-thumb"></span>
+          </div>
+          <button class="zoom-step" id="zoom-out" aria-label="Zoom out">
+            <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10" /></svg>
+          </button>
         </div>
-        <p class="index-intro">Everything currently held in the atlas.</p>
-        <ol id="index-list"></ol>
+        <button class="recenter btn-icon" id="recenter" aria-label="Return to the center" title="Return to center">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="6.5" />
+            <circle cx="12" cy="12" r="2.5" />
+            <path d="M12 1v4.5M12 18.5V23M1 12h4.5M18.5 12H23" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Teaser shown when a cluster is clicked -->
+      <div class="teaser" id="teaser" hidden>
+        <h2 class="teaser-title"></h2>
+        <p class="teaser-sub"></p>
+        <a class="btn btn-white teaser-more" href="#">Read more</a>
+      </div>
+
+      <!-- Index -->
+      <aside class="index" id="index" aria-label="Index" hidden>
+        <button class="index-expand btn-icon" id="index-expand" aria-label="Expand index" title="Expand">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V3h6M3 3l6.5 6.5M21 9V3h-6M21 3l-6.5 6.5M3 15v6h6M3 21l6.5-6.5M21 15v6h-6M21 21l-6.5-6.5" /></svg>
+        </button>
+        <ol class="index-list" id="index-list"></ol>
       </aside>
-    </main>
-    <script src="app.js"></script>
+
+      <!-- Veil for About / Entry -->
+      <div class="veil" id="veil" hidden></div>
+
+      <!-- About -->
+      <section class="about panel" id="about" hidden>
+        <p>
+          Attention Atlas is a public, spatial record of what Tanisha Raghav is finding, making, and paying
+          attention to on the internet. It is not a feed or a folder of bookmarks. It is a field you can move
+          through, where links, images, and notes sit according to her relationship with them rather than by
+          date or topic.
+        </p>
+        <p>
+          Two loose axes orient the map. Along “found it – made it” sit things encountered online and things made
+          in response. Along “passing by – can’t stop thinking about it” sit fleeting discoveries and the threads she
+          keeps returning to. Placement is a personal gesture, not a classification: an item lives where it
+          feels right, and it can move as attention shifts.
+        </p>
+        <p>
+          The atlas is unfinished on purpose. It is meant to show attention as it is: partial, wandering, and
+          occasionally obsessive.
+        </p>
+        <p class="about-note">All entries currently on the map are placeholders.</p>
+      </section>
+
+      <!-- Entry card: reading, adding and editing (filled by app.js) -->
+      <article class="ecard" id="ecard" hidden aria-label="Entry"></article>
+
+      <!-- Edit mode (only with ?edit) -->
+      <div class="edit-bar" id="edit-bar" hidden>
+        <button class="edit-bar-add" id="edit-add">
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10M6 1v10" /></svg>Add an entry
+        </button>
+        <button class="edit-bar-more" id="edit-more" aria-label="More options" aria-expanded="false" aria-controls="edit-menu">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="5" cy="10" r="1.2" /><circle cx="10" cy="10" r="1.2" /><circle cx="15" cy="10" r="1.2" /></svg>
+        </button>
+        <div class="edit-menu" id="edit-menu" hidden>
+          <button id="edit-export">Export entries.json</button>
+          <button id="edit-reset">Start over</button>
+          <a id="edit-done" href="?edit=0">Done editing</a>
+        </div>
+      </div>
+      <div class="edit-toast" id="edit-status" role="status" aria-live="polite"></div>
+
+      <!-- Intro loader -->
+      <div class="loader" id="loader" aria-hidden="true">
+        <span class="loader-name">Attention Atlas</span><span class="loader-dots"><i>·</i><i>·</i><i>·</i></span>
+      </div>
+    </div>
+    <script src="palettes.js?v=16"></script>
+    <script src="app.js?v=47"></script>
   </body>
 </html>
