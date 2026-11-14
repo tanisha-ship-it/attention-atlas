@@ -957,7 +957,15 @@ const params = new URLSearchParams(location.search);
 // only read. You edit locally, Export entries.json, and publish that.
 const IS_LOCAL = location.protocol === 'file:' ||
   ['localhost', '127.0.0.1', '::1', '[::1]'].includes(location.hostname) || location.hostname.endsWith('.localhost');
-const EDIT = IS_LOCAL && (() => {
+// On the live site, editing is unlocked per browser with a GitHub key that can
+// write to this repository (see ?unlock). Unlocked browsers save straight to
+// the repo; everyone else gets the read-only site.
+const GH = { owner: 'tanisha-ship-it', repo: 'attention-atlas', branch: 'main' };   // update after moving the repo
+const KEY_STORE = 'atlas.key', DIRTY_STORE = 'atlas.dirty';
+const ghKey = (() => { try { return localStorage.getItem(KEY_STORE) || ''; } catch (e) { return ''; } })();
+const REMOTE = !!ghKey;                 // this browser is unlocked: saves publish to GitHub
+const OWNER = IS_LOCAL || REMOTE;       // may edit at all
+const EDIT = REMOTE || IS_LOCAL && (() => {
   try {
     if (params.get('edit') === '0') localStorage.removeItem('atlas.edit');
     else if (params.has('edit')) localStorage.setItem('atlas.edit', '1');
@@ -982,6 +990,12 @@ function setStatus(msg, isError = false) {
 }
 
 function save() {
+  if (REMOTE) {
+    try { localStorage.setItem(DIRTY_STORE, '1'); } catch (e) { /* ignore */ }
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(DATA)); } catch (e) { /* too big to keep a local copy; publishing still happens */ }
+    schedulePublish();
+    return true;
+  }
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(DATA));
     setStatus('Saved in this browser. Export to publish.');
@@ -991,6 +1005,97 @@ function save() {
     return false;
   }
 }
+
+// ---------- publishing to GitHub (unlocked browsers only) ----------
+function gh(path, opts = {}) {
+  return fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}${path}`, {
+    ...opts,
+    headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${ghKey}`, 'X-GitHub-Api-Version': '2022-11-28', ...(opts.headers || {}) },
+  });
+}
+function toB64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+const fromB64 = (b) => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, '')), (c) => c.charCodeAt(0)));
+
+let entriesSha = null;            // sha of entries.json in the repo ('' = not there yet)
+const uploadedMedia = new Map();  // data URL → path in the repo, so nothing uploads twice
+let publishTimer = null, publishing = false, publishQueued = false;
+
+async function loadRemoteEntries() {
+  const r = await gh(`/contents/entries.json?ref=${GH.branch}`);
+  if (r.status === 404) { entriesSha = ''; return null; }
+  if (!r.ok) throw Object.assign(new Error(`GitHub said ${r.status}`), { status: r.status });
+  const j = await r.json();
+  entriesSha = j.sha;
+  const text = j.content ? fromB64(j.content)
+    : await (await gh(`/contents/entries.json?ref=${GH.branch}`, { headers: { Accept: 'application/vnd.github.raw' } })).text();
+  return JSON.parse(text);
+}
+
+// Uploaded pictures, videos and files live in the browser as data URLs until
+// they're published; publishing puts each one in media/ and stores its path.
+async function uploadDataURL(u) {
+  if (uploadedMedia.has(u)) return uploadedMedia.get(u);
+  const m = u.match(/^data:([^;,]+)[^,]*;base64,([\s\S]*)$/);
+  if (!m) return u;
+  const ext = ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp', 'image/svg+xml': 'svg', 'application/pdf': 'pdf', 'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm' })[m[1]]
+    || (m[1].split('/')[1] || 'bin').replace(/[^a-z0-9]/gi, '').slice(0, 8) || 'bin';
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(m[2].slice(0, 200000) + m[2].length));
+  const name = [...new Uint8Array(digest)].slice(0, 8).map((x) => x.toString(16).padStart(2, '0')).join('');
+  const path = `media/${name}.${ext}`;
+  const r = await gh(`/contents/${path}`, { method: 'PUT', body: JSON.stringify({ message: `Add ${path}`, content: m[2], branch: GH.branch }) });
+  if (!r.ok && r.status !== 422) throw Object.assign(new Error(`upload failed (${r.status})`), { status: r.status });   // 422 = already there
+  uploadedMedia.set(u, path);
+  return path;
+}
+
+async function publishableData() {
+  const copy = JSON.parse(JSON.stringify(DATA));
+  const fix = async (obj, key) => { if (typeof obj[key] === 'string' && obj[key].startsWith('data:')) obj[key] = await uploadDataURL(obj[key]); };
+  for (const e of copy) {
+    for (const c of e.cells || []) await fix(c, 'src');
+    for (const a of e.attachments || []) { await fix(a, 'src'); await fix(a, 'poster'); await fix(a, 'preview'); }
+  }
+  return copy;
+}
+
+function schedulePublish() {
+  setStatus('Saving…');
+  clearTimeout(publishTimer);
+  publishTimer = setTimeout(publishNow, 1200);
+}
+
+async function publishNow() {
+  if (publishing) { publishQueued = true; return; }
+  publishing = true;
+  try {
+    const body = JSON.stringify(await publishableData(), null, 2) + '\n';
+    if (entriesSha === null) await loadRemoteEntries();
+    const put = () => gh('/contents/entries.json', { method: 'PUT', body: JSON.stringify({ message: 'Update entries', content: toB64(body), branch: GH.branch, ...(entriesSha ? { sha: entriesSha } : {}) }) });
+    let r = await put();
+    if (r.status === 409 || r.status === 422) { await loadRemoteEntries(); r = await put(); }   // the file changed underneath us
+    if (!r.ok) throw Object.assign(new Error(`GitHub said ${r.status}`), { status: r.status });
+    entriesSha = (await r.json()).content.sha;
+    if (!publishQueued) { try { localStorage.removeItem(DIRTY_STORE); localStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ } }
+    setStatus('Published. Everyone sees it in about a minute.');
+  } catch (e) {
+    const why = e.status === 401 ? 'your GitHub key has expired or was removed'
+      : e.status === 403 || e.status === 404 ? 'your GitHub key can’t write to this repository (it needs “Contents: Read and write”)'
+      : (e.message || 'no connection');
+    setStatus(`Couldn’t publish: ${why}. Your change is kept in this browser and will be sent with the next save.`, true);
+  } finally {
+    publishing = false;
+    if (publishQueued) { publishQueued = false; publishNow(); }
+  }
+}
+
+window.addEventListener('beforeunload', (e) => {
+  if (REMOTE && (publishing || publishTimer && localStorage.getItem(DIRTY_STORE) === '1')) { e.preventDefault(); e.returnValue = ''; }
+});
 
 function slugify(t) {
   const base = t.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 48) || 'entry';
@@ -1037,9 +1142,16 @@ $('#edit-export').addEventListener('click', () => {
 
 $('#edit-reset').addEventListener('click', () => {
   if (!confirm('Throw away every edit saved in this browser and go back to the published entries?')) return;
-  try { localStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
+  try { localStorage.removeItem(STORE_KEY); localStorage.removeItem(DIRTY_STORE); } catch (e) { /* ignore */ }
   location.reload();
 });
+
+function lockDevice() {
+  try { localStorage.removeItem(KEY_STORE); } catch (e) { /* ignore */ }
+  location.href = location.pathname;
+}
+$('#edit-lock').addEventListener('click', () => { if (confirm('Lock this device? Editing turns off here until you unlock it again with your GitHub key.')) lockDevice(); });
+if (REMOTE) { $('#edit-lock').hidden = false; $('#edit-done').hidden = true; }
 
 if (EDIT) {
   $('#edit-bar').hidden = false;
@@ -1093,7 +1205,7 @@ document.addEventListener('click', (e) => { if (!e.target.closest('#edit-menu'))
 //     thoughts: [{ d: 'YYYY-MM-DD' | null, t }] }
 // ------------------------------------------------------------------
 const cardEl = $('#ecard');
-const MAX_UPLOAD = 3 * 1024 * 1024;   // browser storage is ~5 MB in total
+const MAX_UPLOAD = (REMOTE ? 25 : 3) * 1024 * 1024;   // unlocked: files go to the repo; otherwise browser storage (~5 MB in total)
 const IC = {
   link: '<svg viewBox="0 0 20 20"><path d="M8.5 11.5a3 3 0 0 0 4.2 0l2.6-2.6a3 3 0 0 0-4.2-4.2l-.9.9M11.5 8.5a3 3 0 0 0-4.2 0l-2.6 2.6a3 3 0 0 0 4.2 4.2l.9-.9"/></svg>',
   file: '<svg viewBox="0 0 20 20"><path d="M6 2.5h5.5L15 6v11.5H6zM11 2.5V6.5h4"/></svg>',
@@ -1218,7 +1330,7 @@ function openEditor(x, y, opts = {}) {
 }
 
 function editFromView() {
-  const s = cardState; if (!s || s.mode !== 'view' || !IS_LOCAL) return;
+  const s = cardState; if (!s || s.mode !== 'view' || !OWNER) return;
   cardState = { mode: 'edit', d: s.d, pos: s.pos, draft: draftFrom(s.d) };
   editState = cardState;
   const c = s.d.cells[0]; editTarget = c ? { x: c.x, y: c.y } : null;
@@ -1360,7 +1472,7 @@ function renderCard() {
        <div class="ec-actions"><button class="ec-save" data-act="save">${s.mode === 'add' ? 'Add to atlas' : 'Save changes'}</button>
        ${s.mode === 'edit' ? '<button class="ec-delete" data-act="delete">Delete entry</button>' : ''}</div>`
     : (tags.length || d.added ? `<div class="ec-foot"><span class="ec-tags-list">${tags.map((t) => `<span>${esc(t)}</span>`).join('')}</span><span class="ec-date">${d.added ? `added ${fmtDate(d.added)}` : ''}</span></div>` : '')
-      + (IS_LOCAL ? '<div class="ec-owner"><button data-act="edit-entry">Edit entry</button><button class="ec-delete" data-act="delete">Delete entry</button></div>' : '');
+      + (OWNER ? '<div class="ec-owner"><button data-act="edit-entry">Edit entry</button><button class="ec-delete" data-act="delete">Delete entry</button></div>' : '');
 
   cardEl.innerHTML = close + top + `<div class="ec-body">${id}${primary}${where}${inside}${thoughtsSec}${foot}</div>`
     + '<input type="file" hidden data-pick="image" accept="image/*"><input type="file" hidden data-pick="video" accept="video/*"><input type="file" hidden data-pick="file">';
@@ -1472,10 +1584,10 @@ async function addFile(file, kind) {
     if (type === 'image') {
       s.draft.attachments.push({ type: 'image', src: await downscale(file), caption: '' });
     } else if (type === 'video') {
-      if (file.size > MAX_UPLOAD) { setStatus(`That video is ${fmtSize(file.size)}; the browser can keep up to ${fmtSize(MAX_UPLOAD)}. Add it as a link instead (YouTube, Vimeo, Instagram).`, true); return; }
+      if (file.size > MAX_UPLOAD) { setStatus(`That video is ${fmtSize(file.size)}; the limit here is ${fmtSize(MAX_UPLOAD)}. Add it as a link instead (YouTube, Vimeo, Instagram).`, true); return; }
       s.draft.attachments.push({ type: 'video', name: file.name, src: await readAsDataURL(file), poster: await videoPoster(file) });
     } else {
-      if (file.size > MAX_UPLOAD) { setStatus(`That file is ${fmtSize(file.size)}; the browser can keep up to ${fmtSize(MAX_UPLOAD)}. Link to it instead.`, true); return; }
+      if (file.size > MAX_UPLOAD) { setStatus(`That file is ${fmtSize(file.size)}; the limit here is ${fmtSize(MAX_UPLOAD)}. Link to it instead.`, true); return; }
       const att = { type: 'file', name: file.name, size: file.size, mime: file.type, src: await readAsDataURL(file) };
       if (isPdf(att)) { setStatus('Making a preview from the first page…'); att.preview = await pdfFirstPage(file); }
       s.draft.attachments.push(att);
@@ -1632,9 +1744,22 @@ cardEl.addEventListener('paste', (e) => {
 
 // Load published entries (entries.json) unless this browser has a draft.
 (async function loadData() {
-  // your in-progress edits only apply on your own computer; the published
-  // site always shows exactly what's in entries.json
-  const draft = IS_LOCAL ? readDraft() : null;
+  if (REMOTE) {
+    // unlocked: read the freshest entries straight from the repo (the public
+    // site lags a minute behind), unless a change here hasn't been published yet
+    let dirty = false; try { dirty = localStorage.getItem(DIRTY_STORE) === '1'; } catch (e) { /* ignore */ }
+    const draft = dirty ? readDraft() : null;
+    if (Array.isArray(draft)) { DATA = draft; rebuild(); route(); schedulePublish(); return; }
+    try {
+      const d = await loadRemoteEntries();
+      if (Array.isArray(d)) { DATA = d; rebuild(); route(); return; }
+    } catch (e) {
+      if (e.status === 401 || e.status === 403) setStatus('Your GitHub key no longer works. Open ?unlock to add a new one.', true);
+    }
+  }
+  // on your own computer (and not unlocked), in-progress edits live in the
+  // browser; visitors always get exactly what's in entries.json
+  const draft = IS_LOCAL && !REMOTE ? readDraft() : null;
   if (Array.isArray(draft)) { DATA = draft; rebuild(); route(); return; }
   try {
     const r = await fetch('entries.json', { cache: 'no-store' });
@@ -1643,6 +1768,33 @@ cardEl.addEventListener('paste', (e) => {
       if (Array.isArray(j)) { DATA = j; rebuild(); route(); }
     }
   } catch (e) { /* no entries.json yet: keep the built-in placeholders */ }
+})();
+
+// ---------- unlocking this device (?unlock) ----------
+(function unlockPage() {
+  if (!params.has('unlock')) return;
+  const box = $('#unlock'), msg = $('#unlock-msg'), input = $('#unlock-key');
+  box.hidden = false;
+  if (REMOTE) {
+    $('#unlock-form').hidden = true;
+    $('#unlock-done').hidden = false;
+    $('#unlock-lock').addEventListener('click', lockDevice);
+    return;
+  }
+  input.focus();
+  $('#unlock-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const key = input.value.trim();
+    if (!key) { msg.textContent = 'Paste your GitHub key first.'; return; }
+    msg.textContent = 'Checking…';
+    try {
+      const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}`, { headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${key}` } });
+      if (r.status === 401) { msg.textContent = 'GitHub doesn’t recognise that key. Check you copied all of it.'; return; }
+      if (!r.ok) { msg.textContent = `That key can’t see ${GH.owner}/${GH.repo}. Give it access to that repository.`; return; }
+      localStorage.setItem(KEY_STORE, key);
+      location.href = location.pathname;
+    } catch (err) { msg.textContent = 'Couldn’t reach GitHub. Check your connection and try again.'; }
+  });
 })();
 
 // ------------------------------------------------------------------

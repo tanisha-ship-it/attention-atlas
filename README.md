@@ -14,10 +14,16 @@ A static site: plain HTML, CSS and JavaScript, no build step.
 
 ## Editing
 
-Editing only works when the site runs locally:
+Only the owner can edit.
+
+**On the live site:** open `/?unlock` and paste a GitHub fine-grained personal access token that has **Contents: Read and write** on this repository. The key stays in that browser. From then on the site shows **+ Add an entry**, and every add, edit, delete or move commits `entries.json` (and uploads into `media/`) to this repo. The public site catches up about a minute later. **⋯ → Lock this device** removes the key.
+
+**Locally:**
 
 ```bash
 python3 -m http.server 8113
 ```
 
-Open `http://localhost:8113/?edit`, add or edit entries, then use **⋯ → Export entries.json** and commit that file to publish.
+Open `http://localhost:8113/?edit`. Without a key, edits stay in the browser; use **⋯ → Export entries.json** and commit that file to publish.
+
+If the repository moves, update `GH` near the top of the editing section in `app.js`.

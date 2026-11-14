@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Figtree:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=42" />
+    <link rel="stylesheet" href="styles.css?v=43" />
   </head>
   <body>
     <div class="app" data-view="ground">
@@ -126,9 +126,29 @@
           <button id="edit-export">Export entries.json</button>
           <button id="edit-reset">Start over</button>
           <a id="edit-done" href="?edit=0">Done editing</a>
+          <button id="edit-lock" hidden>Lock this device</button>
         </div>
       </div>
       <div class="edit-toast" id="edit-status" role="status" aria-live="polite"></div>
+
+      <!-- Unlock editing on this device (?unlock) -->
+      <div class="unlock" id="unlock" hidden>
+        <div class="unlock-card">
+          <form id="unlock-form">
+            <h2>Unlock editing on this device</h2>
+            <p>Paste a GitHub key that can write to this site’s repository. It’s kept in this browser only and is never shown again.</p>
+            <input id="unlock-key" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…" aria-label="GitHub key">
+            <button type="submit">Unlock</button>
+            <p class="unlock-msg" id="unlock-msg" role="status"></p>
+          </form>
+          <div id="unlock-done" hidden>
+            <h2>This device is unlocked</h2>
+            <p>You can add, edit and delete entries here. Changes publish to the site.</p>
+            <a class="unlock-btn" href="./">Go to the atlas</a>
+            <button type="button" id="unlock-lock">Lock this device</button>
+          </div>
+        </div>
+      </div>
 
       <!-- Intro loader -->
       <div class="loader" id="loader" aria-hidden="true">
@@ -136,6 +156,6 @@
       </div>
     </div>
     <script src="palettes.js?v=16"></script>
-    <script src="app.js?v=49"></script>
+    <script src="app.js?v=50"></script>
   </body>
 </html>
