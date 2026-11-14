@@ -46,17 +46,12 @@
       {
         "x": 11,
         "y": -8,
-        "auto": true,
-        "type": "image",
-        "src": "media/stash.png"
+        "type": "text",
+        "text": "Stash",
+        "auto": true
       }
     ],
     "attachments": [
-      {
-        "type": "image",
-        "src": "media/stash.png",
-        "caption": ""
-      },
       {
         "type": "link",
         "url": "https://github.com/traghav24/stash/releases/latest",
