@@ -401,8 +401,8 @@ function wrapText(text, maxW) {
 //   down at "passing by"                  → warm (butter/sand when found, peach/rose when made)
 // Moving an entry changes its colour.
 const WASH = {
-  top:    { found: ['#a6cbe8', '#d3e6d6'], made: ['#9db7e6', '#cdbfe6'] },
-  middle: { found: ['#bdb3e4', '#f1c9d2'], made: ['#c4b4e2', '#f0c3cf'] },
+  top:    { found: ['#e3f0ff', '#cdf0da'], made: ['#ebe3ff', '#d3daff'] },   // pale, so they stand out on the blue
+  middle: { found: ['#ddd1fa', '#fbd0da'], made: ['#e2cff7', '#fcc9d5'] },
   bottom: { found: ['#f1e2ad', '#f3c9a6'], made: ['#f3cdae', '#ecbccb'] },
 };
 const hexRGB = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -426,6 +426,9 @@ function drawTextCell(cell, x, y, w, h) {
   g.addColorStop(0, wash[0]); g.addColorStop(1, wash[1]);
   ctx.fillStyle = g;
   ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+  ctx.strokeStyle = 'rgba(26,25,24,.16)';   // a hairline edge keeps the tile defined on any part of the map
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
   const pad = w * 0.1;
   const size = w * 0.118;
   ctx.save();
