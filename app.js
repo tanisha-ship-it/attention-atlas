@@ -394,25 +394,52 @@ function wrapText(text, maxW) {
   return lines;
 }
 
+// Text tiles get a soft two-colour wash instead of plain white. The pairs sit
+// in the same family as the powder-blue → milk background (cool blues and
+// lilacs, warm peach and butter), and each entry always gets the same one.
+const TILE_WASHES = [
+  ['#9db7e6', '#cdbfe6'],   // periwinkle → lilac
+  ['#a6cbe8', '#d3e6d6'],   // sky → mint
+  ['#f3cdae', '#ecbccb'],   // peach → rose
+  ['#f1e2ad', '#f3c9a6'],   // butter → peach
+  ['#bdb3e4', '#f1c9d2'],   // lavender → blush
+  ['#bfd7c2', '#aecbe8'],   // sage → sky
+  ['#f0c3c9', '#c9c2ea'],   // blush → periwinkle
+  ['#c4dbee', '#f2dfc0'],   // pale sky → sand
+];
+function tileWash(entry) {
+  if (!entry._wash) {
+    let h = 2166136261;
+    for (const ch of entry.slug || entry.title || '') h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+    h = (h ^ (h >>> 15)) >>> 0;
+    entry._wash = { colors: TILE_WASHES[h % TILE_WASHES.length], flip: (h >>> 8) % 2 === 1 };
+  }
+  return entry._wash;
+}
+const tileWashCSS = (entry) => { const t = tileWash(entry); return `linear-gradient(${t.flip ? 200 : 150}deg, ${t.colors[0]}, ${t.colors[1]})`; };
+
 function drawTextCell(cell, x, y, w, h) {
   // inset so the grid lines along the cell's edges stay visible
-  ctx.fillStyle = '#fff';
+  const t = tileWash(cell.entry);
+  const g = t.flip ? ctx.createLinearGradient(x + w, y, x, y + h) : ctx.createLinearGradient(x, y, x + w, y + h);
+  g.addColorStop(0, t.colors[0]); g.addColorStop(1, t.colors[1]);
+  ctx.fillStyle = g;
   ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
-  const pad = w * 0.09;
-  const size = w * 0.115;
+  const pad = w * 0.1;
+  const size = w * 0.118;
   ctx.save();
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
   if (size < 6) {
     // Too small to read — draw greeked lines instead.
-    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillStyle = 'rgba(26,25,24,.5)';
     const lh = h / 7;
     for (let i = 0; i < 4; i++) {
       const lw = (w - pad * 2) * (i === 3 ? 0.55 : 0.92 - (i % 2) * 0.12);
       ctx.fillRect(x + pad, y + pad + i * lh, lw, Math.max(1, lh * 0.38));
     }
   } else {
-    ctx.fillStyle = '#000';
-    ctx.font = `400 ${size}px Inter, Arial, sans-serif`;
+    ctx.fillStyle = '#1a1918';
+    ctx.font = `500 ${size}px Figtree, Inter, Arial, sans-serif`;
     ctx.textBaseline = 'top';
     wrapText(cell.item.text, w - pad * 2).forEach((l, i) => ctx.fillText(l, x + pad, y + pad + i * size * 1.2));
   }
@@ -860,7 +887,7 @@ ENTRIES.forEach((entry) => {
   a.querySelector('h2').textContent = entry.title;
   a.querySelector('p').textContent = entry.sub;
   if (cover) a.querySelector('img').src = cover.src;
-  else a.querySelector('.cover').textContent = entry.items[0].text;
+  else { const cv = a.querySelector('.cover'); cv.textContent = entry.items[0].text; cv.style.background = tileWashCSS(entry); }
   // Hovering a card glides the map to that entry.
   a.addEventListener('pointerenter', () => {
     if (app.classList.contains('index-expanded')) return;

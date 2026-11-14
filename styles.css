@@ -309,10 +309,13 @@ svg { display: block; fill: none; stroke: currentColor; stroke-width: 1.4; }
   object-fit: cover;
 }
 .index-card .cover.is-text {
-  padding: var(--sp-md);
+  padding: var(--sp-lg);
   background: var(--inset);
-  font-size: var(--fs-sm);
-  line-height: 1.3;
+  font-family: Figtree, Inter, Arial, sans-serif;
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #1a1918;
   overflow: hidden;
 }
 .index-card p { font-size: var(--fs-sm); line-height: 1.3; }
