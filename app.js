@@ -394,35 +394,36 @@ function wrapText(text, maxW) {
   return lines;
 }
 
-// Text tiles get a soft two-colour wash instead of plain white. The pairs sit
-// in the same family as the powder-blue → milk background (cool blues and
-// lilacs, warm peach and butter), and each entry always gets the same one.
-const TILE_WASHES = [
-  ['#9db7e6', '#cdbfe6'],   // periwinkle → lilac
-  ['#a6cbe8', '#d3e6d6'],   // sky → mint
-  ['#f3cdae', '#ecbccb'],   // peach → rose
-  ['#f1e2ad', '#f3c9a6'],   // butter → peach
-  ['#bdb3e4', '#f1c9d2'],   // lavender → blush
-  ['#bfd7c2', '#aecbe8'],   // sage → sky
-  ['#f0c3c9', '#c9c2ea'],   // blush → periwinkle
-  ['#c4dbee', '#f2dfc0'],   // pale sky → sand
-];
-function tileWash(entry) {
-  if (!entry._wash) {
-    let h = 2166136261;
-    for (const ch of entry.slug || entry.title || '') h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
-    h = (h ^ (h >>> 15)) >>> 0;
-    entry._wash = { colors: TILE_WASHES[h % TILE_WASHES.length], flip: (h >>> 8) % 2 === 1 };
-  }
-  return entry._wash;
+// Text tiles get a soft two-colour wash instead of plain white, and the wash
+// comes from where the tile sits on the atlas:
+//   up at "can't stop thinking about it" → cool (sky/mint when found, periwinkle/lilac when made)
+//   around the middle                     → lavender into blush
+//   down at "passing by"                  → warm (butter/sand when found, peach/rose when made)
+// Moving an entry changes its colour.
+const WASH = {
+  top:    { found: ['#a6cbe8', '#d3e6d6'], made: ['#9db7e6', '#cdbfe6'] },
+  middle: { found: ['#bdb3e4', '#f1c9d2'], made: ['#c4b4e2', '#f0c3cf'] },
+  bottom: { found: ['#f1e2ad', '#f3c9a6'], made: ['#f3cdae', '#ecbccb'] },
+};
+const hexRGB = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mixHex = (a, b, t) => { const A = hexRGB(a), B = hexRGB(b); return `rgb(${A.map((c, i) => Math.round(c + (B[i] - c) * t)).join(' ')})`; };
+function tileWashAt(wx, wy) {
+  const u = (clamp(wx / WORLD.x, -1, 1) + 1) / 2;          // 0 found it → 1 made it
+  const v0 = clamp(wy / WORLD.y, -1, 1);                   // -1 can't stop → 1 passing by
+  const v = Math.sign(v0) * Math.pow(Math.abs(v0), 0.55);  // reach the cool and warm ends sooner
+  const row = (r) => [mixHex(r.found[0], r.made[0], u), mixHex(r.found[1], r.made[1], u)];
+  const [from, to, t] = v < 0 ? [row(WASH.top), row(WASH.middle), v + 1] : [row(WASH.middle), row(WASH.bottom), v];
+  const blend = (i) => { const p = (c) => c.match(/\d+/g).map(Number); const A = p(from[i]), B = p(to[i]); return `rgb(${A.map((c, k) => Math.round(c + (B[k] - c) * t)).join(' ')})`; };
+  return [blend(0), blend(1)];
 }
-const tileWashCSS = (entry) => { const t = tileWash(entry); return `linear-gradient(${t.flip ? 200 : 150}deg, ${t.colors[0]}, ${t.colors[1]})`; };
+const tileWashCSS = (entry) => { const c = tileWashAt(entry.cx, entry.cy); return `linear-gradient(150deg, ${c[0]}, ${c[1]})`; };
 
 function drawTextCell(cell, x, y, w, h) {
   // inset so the grid lines along the cell's edges stay visible
-  const t = tileWash(cell.entry);
-  const g = t.flip ? ctx.createLinearGradient(x + w, y, x, y + h) : ctx.createLinearGradient(x, y, x + w, y + h);
-  g.addColorStop(0, t.colors[0]); g.addColorStop(1, t.colors[1]);
+  const moving = moveState && (moveState.cell ? moveState.cell === cell : moveState.entry === cell.entry);
+  const wash = tileWashAt(cell.x + 0.5 + (moving ? moveState.dx : 0), cell.y + 0.5 + (moving ? moveState.dy : 0));
+  const g = ctx.createLinearGradient(x, y, x + w, y + h);
+  g.addColorStop(0, wash[0]); g.addColorStop(1, wash[1]);
   ctx.fillStyle = g;
   ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
   const pad = w * 0.1;
