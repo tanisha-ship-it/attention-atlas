@@ -610,7 +610,7 @@ function step(now) {
   const speed = Math.hypot(((cam.y - cam.ly) * docScale) / H, ((cam.x - cam.lx) * docScale) / W) * lensGain();
   const want = Math.min(BULGE.max, speed * BULGE.gain);
   cam.strength = lerp(cam.strength, want, want > cam.strength ? BULGE.rise : BULGE.fall);
-  if (cam.strength < 1e-4) cam.strength = 0;
+  if (!(cam.strength >= 1e-4)) cam.strength = 0;   // also catches NaN, so one bad frame can't blank the map
   cam.lx = cam.x; cam.ly = cam.y;
 
 
@@ -1640,9 +1640,67 @@ function addLink(url, title) {
 }
 
 // ---------- saving ----------
-function autoCellFor(d, x, y) {
-  const pv = previewOf(d.attachments || []);
-  return pv ? { x, y, type: 'image', src: pv.src, auto: true } : { x, y, type: 'text', text: d.title, auto: true };
+// ---------- map footprint: one square per resource ----------
+// An entry made with this card covers as many squares as it has attachments
+// (at least one). The first square stands for the entry (its preview, or its
+// title); the rest are its other attachments: a picture if there is one,
+// otherwise a text tile with the attachment's name.
+function tileOfAttachment(a) {
+  if (a.type === 'image') return { type: 'image', src: a.src };
+  if (a.type === 'video' && a.poster) return { type: 'image', src: a.poster };
+  if (a.type === 'file' && a.preview) return { type: 'image', src: a.preview };
+  if (a.type === 'link' && youtubeId(a.url)) return { type: 'image', src: `https://img.youtube.com/vi/${youtubeId(a.url)}/hqdefault.jpg` };
+  if (a.type === 'link') return { type: 'text', text: a.title || domainOf(a.url) };
+  return { type: 'text', text: a.name || a.caption || 'File' };
+}
+function tilesFor(d) {
+  const tiles = (d.attachments || []).map(tileOfAttachment);
+  if (!tiles.length) return [{ type: 'text', text: d.title }];
+  const lead = tiles.findIndex((t) => t.type === 'image');
+  if (lead > 0) tiles.unshift(tiles.splice(lead, 1)[0]);      // the preview leads
+  if (lead < 0) tiles[0] = { type: 'text', text: d.title };   // no picture: the title leads
+  return tiles;
+}
+
+// Lay the tiles out as a cluster. Squares already placed keep their spots (so
+// shapes are stable and hand-arranged ones survive); new squares attach to
+// the side of the cluster, picked pseudo-randomly per entry so shapes vary.
+function syncAutoCells(d, anchor) {
+  const tiles = tilesFor(d);
+  const old = (d.cells || []).filter((c) => c.auto);
+  const kept = (d.cells || []).filter((c) => !c.auto);          // squares of older, hand-built entries
+  const taken = new Set();
+  DATA.forEach((o) => { if (o !== d) (o.cells || []).forEach((c) => taken.add(`${c.x},${c.y}`)); });
+  kept.forEach((c) => taken.add(`${c.x},${c.y}`));
+  let seed = 2166136261;
+  for (const ch of d.slug || d.title || '') seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const rand = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+  const inWorld = (x, y) => Math.abs(x + 0.5) <= WORLD.x + 0.5 && Math.abs(y + 0.5) <= WORLD.y + 0.5;
+  const placed = [];
+  tiles.forEach((t, i) => {
+    let pos = old[i] ? { x: old[i].x, y: old[i].y } : null;
+    if (!pos && !placed.length) pos = anchor;
+    if (!pos) {
+      const mine = new Set(placed.map((c) => `${c.x},${c.y}`));
+      const options = [];
+      placed.forEach((c) => [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => {
+        const x = c.x + dx, y = c.y + dy, k = `${x},${y}`;
+        if (!mine.has(k) && !taken.has(k) && inWorld(x, y) && !options.some((o) => o.x === x && o.y === y)) options.push({ x, y });
+      }));
+      // keep a one-square gap from other entries when there's room, so clusters read as separate
+      const touchesOther = (o) => [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]].some(([dx, dy]) => taken.has(`${o.x + dx},${o.y + dy}`));
+      const roomy = options.filter((o) => !touchesOther(o));
+      let pool = roomy.length ? roomy : options;
+      // more often than not, continue from the newest square, so shapes wander like tetris pieces instead of filling a block
+      const last = placed[placed.length - 1];
+      const fromLast = pool.filter((o) => Math.abs(o.x - last.x) + Math.abs(o.y - last.y) === 1);
+      for (let n = 0; n <= i; n++) rand();                       // vary the pick with the square's index
+      if (fromLast.length && rand() < 0.65) pool = fromLast;
+      pos = pool.length ? pool[Math.floor(rand() * pool.length)] : null;
+    }
+    if (pos) placed.push({ x: pos.x, y: pos.y, auto: true, ...t });   // no room left: that resource simply has no square
+  });
+  d.cells = [...kept, ...placed];
 }
 
 function saveCard() {
@@ -1662,8 +1720,8 @@ function saveCard() {
     if (!spot) { setStatus('The map is full. Remove something first.', true); return; }
     d = { slug: slugify(fields.title), ...fields, added: todayISO(), thoughts: [], cells: [] };
     if (dr.firstThought.trim()) d.thoughts.push({ d: todayISO(), t: dr.firstThought.trim() });
-    d.cells.push(autoCellFor(d, spot.x, spot.y));
     DATA.push(d);
+    syncAutoCells(d, spot);
   } else {
     d = s.d;
     Object.assign(d, fields);
@@ -1673,10 +1731,10 @@ function saveCard() {
     if (dr.removed.length) {
       const first = d.cells[0];
       d.cells = d.cells.filter((c, ci) => !dr.removed.includes(ci));
-      if (!d.cells.length) d.cells = [autoCellFor(d, first.x, first.y)];
+      if (!d.cells.length) d.cells = [{ x: first.x, y: first.y, auto: true, type: 'text', text: d.title }];
     }
-    // single-square entries made with this card keep their map tile in sync
-    if (d.cells.length === 1 && d.cells[0].auto) d.cells[0] = autoCellFor(d, d.cells[0].x, d.cells[0].y);
+    // entries made with this card: one square per resource, kept in sync
+    if (d.cells.some((c) => c.auto)) syncAutoCells(d, d.cells.find((c) => c.auto));
   }
   rebuild(); save();
   const ent = bySlug[d.slug];

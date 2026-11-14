@@ -16,6 +16,13 @@
         "auto": true,
         "type": "text",
         "text": "Attention Atlas"
+      },
+      {
+        "x": 6,
+        "y": -8,
+        "auto": true,
+        "type": "text",
+        "text": "Source on GitHub"
       }
     ],
     "attachments": [
@@ -46,9 +53,16 @@
       {
         "x": 11,
         "y": -8,
+        "auto": true,
         "type": "text",
-        "text": "Stash",
-        "auto": true
+        "text": "Stash"
+      },
+      {
+        "x": 10,
+        "y": -8,
+        "auto": true,
+        "type": "text",
+        "text": "Source on GitHub"
       }
     ],
     "attachments": [
@@ -111,6 +125,20 @@
         "auto": true,
         "type": "text",
         "text": "Context Flow"
+      },
+      {
+        "x": 9,
+        "y": -4,
+        "auto": true,
+        "type": "text",
+        "text": "Context Flow on GitHub"
+      },
+      {
+        "x": 8,
+        "y": -4,
+        "auto": true,
+        "type": "text",
+        "text": "Context Flow, Google version"
       }
     ],
     "attachments": [
@@ -148,6 +176,41 @@
         "auto": true,
         "type": "text",
         "text": "Tanisha’s Brain Pickings"
+      },
+      {
+        "x": 13,
+        "y": -5,
+        "auto": true,
+        "type": "text",
+        "text": "is interest a reliable guide?"
+      },
+      {
+        "x": 13,
+        "y": -4,
+        "auto": true,
+        "type": "text",
+        "text": "on being a dot collector"
+      },
+      {
+        "x": 12,
+        "y": -5,
+        "auto": true,
+        "type": "text",
+        "text": "on twenty"
+      },
+      {
+        "x": 13,
+        "y": -6,
+        "auto": true,
+        "type": "text",
+        "text": "on fundamentals"
+      },
+      {
+        "x": 12,
+        "y": -6,
+        "auto": true,
+        "type": "text",
+        "text": "on god"
       }
     ],
     "attachments": [
@@ -200,6 +263,20 @@
         "auto": true,
         "type": "image",
         "src": "media/portfolio.jpg"
+      },
+      {
+        "x": 15,
+        "y": -2,
+        "auto": true,
+        "type": "text",
+        "text": "Open the portfolio"
+      },
+      {
+        "x": 14,
+        "y": -2,
+        "auto": true,
+        "type": "text",
+        "text": "About me"
       }
     ],
     "attachments": [
@@ -238,6 +315,13 @@
         "auto": true,
         "type": "text",
         "text": "Perspective Lab"
+      },
+      {
+        "x": 6,
+        "y": 2,
+        "auto": true,
+        "type": "text",
+        "text": "Try Perspective Lab"
       }
     ],
     "attachments": [
@@ -271,6 +355,20 @@
         "auto": true,
         "type": "text",
         "text": "Emote"
+      },
+      {
+        "x": 8,
+        "y": 4,
+        "auto": true,
+        "type": "text",
+        "text": "Emote app on GitHub"
+      },
+      {
+        "x": 9,
+        "y": 5,
+        "auto": true,
+        "type": "text",
+        "text": "Reframe engine on GitHub"
       }
     ],
     "attachments": [
