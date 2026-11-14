@@ -1498,9 +1498,10 @@ function attRow(a, i, editing) {
       ${editing ? `<button class="ec-rm" data-act="remove" data-i="${i}" aria-label="Remove">×</button>` : ''}</div>`;
   }
   const tag = !editing && href ? 'a' : 'div';
-  const attrs = tag === 'a' ? `href="${esc(href)}" target="_blank" rel="noopener"` : (!editing && a.type === 'file' ? `data-act="open-att" data-i="${i}" role="button" tabindex="0"` : '');
+  const attrs = tag === 'a' ? `href="${esc(href)}" target="_blank" rel="noopener"` : (!editing && a.type === 'file' ? `data-act="open-att" data-i="${i}" role="button" tabindex="0"`
+    : !editing && a.type === 'video' && a.src ? 'data-act="play" role="button" tabindex="0"' : '');
   return `<${tag} class="ec-att" ${attrs}><span class="ic">${ic}</span><span class="t"><b>${esc(title)}</b><span>${esc(meta)}</span></span>
-    ${editing ? `<button class="ec-rm" data-act="remove" data-i="${i}" aria-label="Remove">×</button>` : `<span class="go">${IC.arrow}</span>`}</${tag}>`;
+    ${editing ? `<button class="ec-rm" data-act="remove" data-i="${i}" aria-label="Remove">×</button>` : `<span class="go">${a.type === 'file' ? 'Open file' : a.type === 'video' ? 'Play' : 'Open'}${IC.arrow}</span>`}</${tag}>`;
 }
 
 function paintDials() {
