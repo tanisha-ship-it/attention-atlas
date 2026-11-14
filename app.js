@@ -1139,11 +1139,11 @@ function setAccent(el, y) {
 // ---------- reading an entry ----------
 // Older entries are clusters of image/note cells; their extra cells show up
 // as things inside the entry, and their old description as undated thoughts.
-function legacyParts(d) {
-  const cells = (d.cells || []).filter((c) => !c.auto);
+function legacyParts(d, removed = []) {
+  const cells = (d.cells || []).map((c, ci) => ({ c, ci })).filter(({ c, ci }) => !c.auto && !removed.includes(ci));
   return {
-    images: cells.filter((c) => c.type === 'image').map((c) => ({ type: 'image', src: imgSrc(c), caption: c.caption || '' })),
-    notes: cells.filter((c) => c.type === 'text').map((c) => ({ type: 'note', text: c.text })),
+    images: cells.filter(({ c }) => c.type === 'image').map(({ c, ci }) => ({ type: 'image', src: imgSrc(c), caption: c.caption || '', ci })),
+    notes: cells.filter(({ c }) => c.type === 'text').map(({ c, ci }) => ({ type: 'note', text: c.text, ci })),
   };
 }
 const thoughtsOf = (d) => d.thoughts || (d.text || []).map((t) => ({ d: null, t }));
@@ -1217,11 +1217,21 @@ function openEditor(x, y, opts = {}) {
   cardEl.querySelector('[data-f="title"]')?.focus();
 }
 
+function editFromView() {
+  const s = cardState; if (!s || s.mode !== 'view' || !IS_LOCAL) return;
+  cardState = { mode: 'edit', d: s.d, pos: s.pos, draft: draftFrom(s.d) };
+  editState = cardState;
+  const c = s.d.cells[0]; editTarget = c ? { x: c.x, y: c.y } : null;
+  renderCard();
+  cardEl.scrollTop = 0;
+  cardEl.querySelector('[data-f="title"]')?.focus();
+}
+
 function draftFrom(d) {
   return {
     title: d ? d.title : '', sub: d ? d.sub || '' : '', kind: d ? d.kind || '' : '',
     tags: d ? (d.tags || []).join(', ') : '', attachments: d ? JSON.parse(JSON.stringify(d.attachments || [])) : [],
-    firstThought: '', linkForm: false, error: '',
+    firstThought: '', linkForm: false, error: '', removed: [],   // removed = map squares to drop on save
   };
 }
 
@@ -1234,11 +1244,10 @@ function showCard() {
 }
 
 function closeEditor() {
-  const wasView = cardState && cardState.mode === 'view';
   cardState = null; editState = null; editTarget = null;
   cardEl.hidden = true; cardEl.innerHTML = '';
   app.classList.remove('is-editor-open');
-  if (wasView && app.dataset.view === 'entry') { location.hash = '#/'; return; }
+  if (app.dataset.view === 'entry') { location.hash = '#/'; return; }
   if (app.dataset.view !== 'about' && app.dataset.view !== 'entry') $('#veil').hidden = true;
 }
 
@@ -1257,7 +1266,7 @@ function renderCard() {
   const d = s.d;
   const dr = s.draft;
   const atts = editing ? dr.attachments : (d.attachments || []);
-  const legacy = d ? legacyParts(d) : { images: [], notes: [] };
+  const legacy = d ? legacyParts(d, editing ? dr.removed : []) : { images: [], notes: [] };
   const pv = previewOf(atts, legacy.images);
   const extraImages = legacy.images.filter((im) => !(pv && pv.src === im.src));   // the preview isn't repeated below
   const total = atts.length + legacy.images.length + legacy.notes.length;
@@ -1322,6 +1331,11 @@ function renderCard() {
     rows.push(attRow(a, i, editing));
   });
   if (!editing) legacy.notes.forEach((n) => rows.push(`<div class="ec-att is-note"><span class="ic">${IC.note}</span><span class="t"><b class="wrap">${esc(n.text)}</b></span></div>`));
+  if (editing) {
+    const rmBtn = (ci) => `<button class="ec-rm" data-act="remove-cell" data-ci="${ci}" aria-label="Remove this square from the map">×</button>`;
+    legacy.images.forEach((im) => rows.push(`<div class="ec-att is-image"><span class="ic" style="background-image:url('${esc(im.src)}')"></span><span class="t"><b>${esc(im.caption || 'Image')}</b><span>square on the map</span></span>${rmBtn(im.ci)}</div>`));
+    legacy.notes.forEach((n) => rows.push(`<div class="ec-att is-note"><span class="ic">${IC.note}</span><span class="t"><b class="wrap">${esc(n.text)}</b><span>square on the map</span></span>${rmBtn(n.ci)}</div>`));
+  }
   const thumbs = !editing && extraImages.length ? `<div class="ec-thumbs">${extraImages.map((im) => `<span style="background-image:url('${im.src}')"></span>`).join('')}</div>` : '';
   const insideCount = rows.length + (thumbs ? extraImages.length : 0);
   const inside = (insideCount || editing)
@@ -1345,7 +1359,8 @@ function renderCard() {
     ? `<div class="ec-foot is-edit"><label class="ec-field ec-tags"><span>Tags</span><input data-f="tags" value="${esc(dr.tags)}" placeholder="memory, interfaces"></label></div>
        <div class="ec-actions"><button class="ec-save" data-act="save">${s.mode === 'add' ? 'Add to atlas' : 'Save changes'}</button>
        ${s.mode === 'edit' ? '<button class="ec-delete" data-act="delete">Delete entry</button>' : ''}</div>`
-    : (tags.length || d.added ? `<div class="ec-foot"><span class="ec-tags-list">${tags.map((t) => `<span>${esc(t)}</span>`).join('')}</span><span class="ec-date">${d.added ? `added ${fmtDate(d.added)}` : ''}</span></div>` : '');
+    : (tags.length || d.added ? `<div class="ec-foot"><span class="ec-tags-list">${tags.map((t) => `<span>${esc(t)}</span>`).join('')}</span><span class="ec-date">${d.added ? `added ${fmtDate(d.added)}` : ''}</span></div>` : '')
+      + (IS_LOCAL ? '<div class="ec-owner"><button data-act="edit-entry">Edit entry</button><button class="ec-delete" data-act="delete">Delete entry</button></div>' : '');
 
   cardEl.innerHTML = close + top + `<div class="ec-body">${id}${primary}${where}${inside}${thoughtsSec}${foot}</div>`
     + '<input type="file" hidden data-pick="image" accept="image/*"><input type="file" hidden data-pick="video" accept="video/*"><input type="file" hidden data-pick="file">';
@@ -1511,6 +1526,11 @@ function saveCard() {
     if (!dr.kind.trim()) delete d.kind;
     if (!d.thoughts) d.thoughts = thoughtsOf(d);
     delete d.text;
+    if (dr.removed.length) {
+      const first = d.cells[0];
+      d.cells = d.cells.filter((c, ci) => !dr.removed.includes(ci));
+      if (!d.cells.length) d.cells = [autoCellFor(d, first.x, first.y)];
+    }
     // single-square entries made with this card keep their map tile in sync
     if (d.cells.length === 1 && d.cells[0].auto) d.cells[0] = autoCellFor(d, d.cells[0].x, d.cells[0].y);
   }
@@ -1551,6 +1571,8 @@ cardEl.addEventListener('click', (e) => {
   if (act === 'close') return closeEditor();
   if (act === 'save') return saveCard();
   if (act === 'delete') return deleteCardEntry();
+  if (act === 'edit-entry') return editFromView();
+  if (act === 'remove-cell') { readDraft_(); s.draft.removed.push(+t.dataset.ci); renderCard(); return; }
   if (act === 'add-thought') return addThoughtNow();
   if (act === 'pick') { cardEl.querySelector(`[data-pick="${t.dataset.kind}"]`).click(); return; }
   if (act === 'pick-link') { readDraft_(); s.draft.linkForm = true; renderCard(); cardEl.querySelector('[data-lf="url"]')?.focus(); return; }

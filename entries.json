@@ -1,0 +1,522 @@
+[
+  {
+    "slug": "attention-atlas",
+    "title": "Attention Atlas",
+    "sub": "This map. A spatial record of what I’m finding, making and paying attention to.",
+    "kind": "website · made it",
+    "tags": [
+      "this site",
+      "maps"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 6,
+        "y": -7,
+        "auto": true,
+        "type": "text",
+        "text": "Attention Atlas"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://tanisharaghav.in/attention-atlas/",
+        "title": "Open the atlas"
+      },
+      {
+        "type": "link",
+        "url": "https://github.com/tanisha-ship-it/attention-atlas",
+        "title": "Source on GitHub"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "stash",
+    "title": "Stash",
+    "sub": "Feed anything to the dog. It files what you save, plans what you have to do, and times you while you do it.",
+    "kind": "mac app · made it",
+    "tags": [
+      "tools",
+      "time"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 11,
+        "y": -8,
+        "auto": true,
+        "type": "image",
+        "src": "media/stash.png"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "image",
+        "src": "media/stash.png",
+        "caption": ""
+      },
+      {
+        "type": "link",
+        "url": "https://github.com/traghav24/stash/releases/latest",
+        "title": "Download for Mac"
+      },
+      {
+        "type": "link",
+        "url": "https://github.com/traghav24/stash",
+        "title": "Source on GitHub"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "ai-design-framework",
+    "title": "My AI Design Framework",
+    "sub": "My framework for working with AI without losing my judgment as a designer.",
+    "kind": "framework",
+    "tags": [
+      "AI",
+      "design practice"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 3,
+        "y": -4,
+        "auto": true,
+        "type": "text",
+        "text": "My AI Design Framework"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://tanisharaghav.in/ai-framework",
+        "title": "Read the framework"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "context-flow",
+    "title": "Context Flow",
+    "sub": "Stop time-blocking, start context-blocking: the essay and the prototypes that came out of it.",
+    "kind": "essay + prototypes",
+    "tags": [
+      "time",
+      "prototypes",
+      "writing"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 9,
+        "y": -3,
+        "auto": true,
+        "type": "text",
+        "text": "Context Flow"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://tanishasbrainpickings.substack.com/p/stop-time-blocking-start-context",
+        "title": "stop time-blocking. start context-blocking."
+      },
+      {
+        "type": "link",
+        "url": "https://github.com/traghav24/context-flow",
+        "title": "Context Flow on GitHub"
+      },
+      {
+        "type": "link",
+        "url": "https://github.com/traghav24/context-flow2",
+        "title": "Context Flow, Google version"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "tanishas-brain-pickings",
+    "title": "Tanisha’s Brain Pickings",
+    "sub": "My Substack: essays worked out in public.",
+    "kind": "writing · substack",
+    "tags": [
+      "writing"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 14,
+        "y": -5,
+        "auto": true,
+        "type": "text",
+        "text": "Tanisha’s Brain Pickings"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://tanishasbrainpickings.substack.com/",
+        "title": "Tanisha’s Brain Pickings"
+      },
+      {
+        "type": "link",
+        "url": "https://tanishasbrainpickings.substack.com/p/is-interest-a-reliable-guide",
+        "title": "is interest a reliable guide?"
+      },
+      {
+        "type": "link",
+        "url": "https://tanishasbrainpickings.substack.com/p/71-on-being-a-dot-collector",
+        "title": "on being a dot collector"
+      },
+      {
+        "type": "link",
+        "url": "https://tanishasbrainpickings.substack.com/p/16-on-twenty",
+        "title": "on twenty"
+      },
+      {
+        "type": "link",
+        "url": "https://tanishasbrainpickings.substack.com/p/15-on-fundamentals",
+        "title": "on fundamentals"
+      },
+      {
+        "type": "link",
+        "url": "https://tanishasbrainpickings.substack.com/p/12-on-god",
+        "title": "on god"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "portfolio",
+    "title": "tanisharaghav.in",
+    "sub": "My portfolio, with butterflies you can catch.",
+    "kind": "website · made it",
+    "tags": [
+      "portfolio"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 16,
+        "y": -2,
+        "auto": true,
+        "type": "image",
+        "src": "media/portfolio.jpg"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "image",
+        "src": "media/portfolio.jpg",
+        "caption": ""
+      },
+      {
+        "type": "link",
+        "url": "https://tanisharaghav.in/",
+        "title": "Open the portfolio"
+      },
+      {
+        "type": "link",
+        "url": "https://tanisharaghav.in/about",
+        "title": "About me"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "perspective-lab",
+    "title": "Perspective Lab",
+    "sub": "Reframing limiting beliefs: an AI-powered reframing tool for cognitive distortions.",
+    "kind": "personal project",
+    "tags": [
+      "psychology",
+      "AI"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 5,
+        "y": 2,
+        "auto": true,
+        "type": "text",
+        "text": "Perspective Lab"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://tanisharaghav.in/pov-lab",
+        "title": "Case study"
+      },
+      {
+        "type": "link",
+        "url": "https://692c0bb350fe9640628546a4--perspectivelab.netlify.app/",
+        "title": "Try Perspective Lab"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "emote",
+    "title": "Emote",
+    "sub": "Making emotional care lighter for GenZ.",
+    "kind": "startup project · ashoka university",
+    "tags": [
+      "psychology",
+      "startup"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 9,
+        "y": 4,
+        "auto": true,
+        "type": "text",
+        "text": "Emote"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://tanisharaghav.in/emote",
+        "title": "Case study"
+      },
+      {
+        "type": "link",
+        "url": "https://github.com/traghav24/emote-app",
+        "title": "Emote app on GitHub"
+      },
+      {
+        "type": "link",
+        "url": "https://github.com/traghav24/emote-reframe-engine",
+        "title": "Reframe engine on GitHub"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "stanford-medicine",
+    "title": "Routing patient concerns before they disappear",
+    "sub": "Externship with Stanford Medicine.",
+    "kind": "case study · stanford medicine",
+    "tags": [
+      "healthcare",
+      "product design"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 13,
+        "y": 2,
+        "auto": true,
+        "type": "text",
+        "text": "Routing patient concerns before they disappear"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://tanisharaghav.in/stanford-medicine",
+        "title": "Case study"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "micro-assignments",
+    "title": "Rethinking learning through micro-assignments",
+    "sub": "A product feature for Google Classroom.",
+    "kind": "case study · google classroom",
+    "tags": [
+      "learning",
+      "product design"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 15,
+        "y": 6,
+        "auto": true,
+        "type": "text",
+        "text": "Rethinking learning through micro-assignments"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://tanisharaghav.in/micro-assignments",
+        "title": "Case study"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "critical-thinking-coach",
+    "title": "Critical thinking coach",
+    "sub": "An interactive critical thinking coach to improve your writing.",
+    "kind": "prototype",
+    "tags": [
+      "writing",
+      "AI"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 4,
+        "y": 7,
+        "auto": true,
+        "type": "text",
+        "text": "Critical thinking coach"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://github.com/traghav24/critical-thinking-coach",
+        "title": "Source on GitHub"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "math-equation-simulator",
+    "title": "Math equation simulator",
+    "sub": "",
+    "kind": "prototype",
+    "tags": [
+      "math"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 8,
+        "y": 8,
+        "auto": true,
+        "type": "text",
+        "text": "Math equation simulator"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://github.com/traghav24/math-equation-simulator",
+        "title": "Source on GitHub"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "sandbox",
+    "title": "Sandbox",
+    "sub": "Consistency = f(Joy).",
+    "kind": "collection",
+    "tags": [
+      "play"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": 12,
+        "y": 9,
+        "auto": true,
+        "type": "text",
+        "text": "Sandbox"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://tanisharaghav.in/sandbox",
+        "title": "Open the sandbox"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "tracing-the-ground",
+    "title": "Tracing the Ground",
+    "sub": "Philine Rinnert’s research archive. The reference for how this atlas moves.",
+    "kind": "reference · found it",
+    "tags": [
+      "maps",
+      "interfaces"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": -8,
+        "y": -6,
+        "auto": true,
+        "type": "text",
+        "text": "Tracing the Ground"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://tracingtheground.org/",
+        "title": "tracingtheground.org"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "emmi-wu",
+    "title": "Emmi Wu’s portfolio",
+    "sub": "Where the entry cards’ type comes from: Figtree for words, small mono labels.",
+    "kind": "reference · found it",
+    "tags": [
+      "typography",
+      "portfolios"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": -6,
+        "y": 3,
+        "auto": true,
+        "type": "text",
+        "text": "Emmi Wu’s portfolio"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://www.emmiwu.com/",
+        "title": "emmiwu.com"
+      }
+    ],
+    "thoughts": []
+  },
+  {
+    "slug": "dialkit",
+    "title": "DialKit",
+    "sub": "Josh Puckett’s panel for dialling in interface values. The two dials on each card borrow its rows.",
+    "kind": "reference · found it",
+    "tags": [
+      "tools",
+      "interfaces"
+    ],
+    "added": "2026-11-14",
+    "cells": [
+      {
+        "x": -12,
+        "y": 5,
+        "auto": true,
+        "type": "text",
+        "text": "DialKit"
+      }
+    ],
+    "attachments": [
+      {
+        "type": "link",
+        "url": "https://github.com/joshpuckett/dialkit",
+        "title": "DialKit on GitHub"
+      }
+    ],
+    "thoughts": []
+  }
+]
