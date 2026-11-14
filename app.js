@@ -1177,7 +1177,7 @@ function inferKind(atts, total) {
 function primaryOf(atts) {
   const link = atts.find((a) => a.type === 'link');
   if (link) {
-    const label = youtubeId(link.url) ? 'Watch on YouTube' : isInstagram(link.url) ? 'Watch on Instagram' : 'Open link';
+    const label = link.title || (youtubeId(link.url) ? 'Watch on YouTube' : isInstagram(link.url) ? 'Watch on Instagram' : 'Open link');
     return { label, meta: `${domainOf(link.url)} ↗`, href: link.url, att: link };
   }
   const f = atts.find((a) => a.type === 'file');
